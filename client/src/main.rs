@@ -545,8 +545,8 @@ pub enum CommandsName {
         mint: Pubkey,
     },
 }
-// #[cfg(not(feature = "async"))]
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     println!("Starting...");
     let client_config = "client_config.ini";
     let pool_config = load_cfg(&client_config.to_string()).unwrap();
@@ -663,7 +663,7 @@ fn main() -> Result<()> {
                 freeze_authority.as_ref(),
                 extensions,
                 decimals as u8,
-            )?;
+            ).await?;
             // send
             let signers = vec![&payer, &mint];
             let recent_hash = rpc_client.get_latest_blockhash()?;
@@ -690,7 +690,7 @@ fn main() -> Result<()> {
                     &auxiliary_token_keypair.pubkey(),
                     &mint,
                     &authority,
-                )?
+                ).await?
             } else {
                 let mint_account = rpc_client.get_account(&mint)?;
                 create_ata_token_account_instr(
@@ -698,7 +698,7 @@ fn main() -> Result<()> {
                     mint_account.owner,
                     &mint,
                     &authority,
-                )?
+                ).await?
             };
             // send
             let recent_hash = rpc_client.get_latest_blockhash()?;
@@ -943,7 +943,7 @@ fn main() -> Result<()> {
             let program = anchor_client.program(pool_config.raydium_v3_program)?;
             println!("{}", pool_config.pool_id_account.unwrap());
             let pool_account: raydium_amm_v3::states::PoolState =
-                program.account(pool_config.pool_id_account.unwrap())?;
+                program.account(pool_config.pool_id_account.unwrap()).await?;
             let operator_account_key = Pubkey::find_program_address(
                 &[raydium_amm_v3::states::OPERATION_SEED.as_bytes()],
                 &program.id(),
@@ -997,7 +997,7 @@ fn main() -> Result<()> {
             let program = anchor_client.program(pool_config.raydium_v3_program)?;
             println!("{}", pool_config.pool_id_account.unwrap());
             let pool_account: raydium_amm_v3::states::PoolState =
-                program.account(pool_config.pool_id_account.unwrap())?;
+                program.account(pool_config.pool_id_account.unwrap()).await?;
             let operator_account_key = Pubkey::find_program_address(
                 &[raydium_amm_v3::states::OPERATION_SEED.as_bytes()],
                 &program.id(),
@@ -1079,7 +1079,7 @@ fn main() -> Result<()> {
         } => {
             // load pool to get observation
             let pool: raydium_amm_v3::states::PoolState =
-                program.account(pool_config.pool_id_account.unwrap())?;
+                program.account(pool_config.pool_id_account.unwrap()).await?;
 
             let tick_lower_price_x64 = price_to_sqrt_price_x64(
                 tick_lower_price,
@@ -1265,7 +1265,7 @@ fn main() -> Result<()> {
         } => {
             // load pool to get observation
             let pool: raydium_amm_v3::states::PoolState =
-                program.account(pool_config.pool_id_account.unwrap())?;
+                program.account(pool_config.pool_id_account.unwrap()).await?;
 
             // load position
             let position_nft_infos = get_all_nft_and_position_by_owner(
@@ -1450,7 +1450,7 @@ fn main() -> Result<()> {
         } => {
             // load pool to get observation
             let pool: raydium_amm_v3::states::PoolState =
-                program.account(pool_config.pool_id_account.unwrap())?;
+                program.account(pool_config.pool_id_account.unwrap()).await?;
 
             let tick_array_lower_start_index =
                 raydium_amm_v3::states::TickArrayState::get_array_start_index(
@@ -2005,7 +2005,7 @@ fn main() -> Result<()> {
                 pool_config.pool_id_account.unwrap()
             };
             println!("pool_id:{}", pool_id);
-            let pool: raydium_amm_v3::states::PoolState = program.account(pool_id)?;
+            let pool: raydium_amm_v3::states::PoolState = program.account(pool_id).await?;
 
             let tick_array_start_index =
                 raydium_amm_v3::states::TickArrayState::get_array_start_index(
@@ -2022,7 +2022,7 @@ fn main() -> Result<()> {
                 &program.id(),
             );
             let mut tick_array_account: raydium_amm_v3::states::TickArrayState =
-                program.account(tick_array_key)?;
+                program.account(tick_array_key).await?;
             let tick_state = tick_array_account
                 .get_tick_state_mut(tick, pool.tick_spacing.into())
                 .unwrap();
@@ -2057,15 +2057,15 @@ fn main() -> Result<()> {
             );
             println!("{}", operation_account_key);
             let operation_account: raydium_amm_v3::states::OperationState =
-                program.account(operation_account_key)?;
+                program.account(operation_account_key).await?;
             println!("{:#?}", operation_account);
         }
         CommandsName::PObservation => {
             let pool: raydium_amm_v3::states::PoolState =
-                program.account(pool_config.pool_id_account.unwrap())?;
+                program.account(pool_config.pool_id_account.unwrap()).await?;
             println!("{}", pool.observation_key);
             let observation_account: raydium_amm_v3::states::ObservationState =
-                program.account(pool.observation_key)?;
+                program.account(pool.observation_key).await?;
             println!("{:#?}", observation_account);
         }
         CommandsName::PConfig { config_index } => {
@@ -2078,7 +2078,7 @@ fn main() -> Result<()> {
             );
             println!("{}", amm_config_key);
             let amm_config_account: raydium_amm_v3::states::AmmConfig =
-                program.account(amm_config_key)?;
+                program.account(amm_config_key).await?;
             println!("{:#?}", amm_config_account);
         }
         CommandsName::PriceToTick { price } => {
@@ -2109,7 +2109,7 @@ fn main() -> Result<()> {
             liquidity,
         } => {
             let pool_account: raydium_amm_v3::states::PoolState =
-                program.account(pool_config.pool_id_account.unwrap())?;
+                program.account(pool_config.pool_id_account.unwrap()).await?;
             let amounts = raydium_amm_v3::libraries::get_delta_amounts_signed(
                 pool_account.tick_current,
                 pool_account.sqrt_price_x64,
@@ -2270,7 +2270,7 @@ fn main() -> Result<()> {
                 pool_config.pool_id_account.unwrap()
             };
             println!("pool_id:{}", pool_id);
-            let pool_account: raydium_amm_v3::states::PoolState = program.account(pool_id)?;
+            let pool_account: raydium_amm_v3::states::PoolState = program.account(pool_id).await?;
             println!("{:#?}", pool_account);
         }
         CommandsName::PBitmapExtension { bitmap_extension } => {
@@ -2281,17 +2281,17 @@ fn main() -> Result<()> {
             };
             println!("bitmap_extension:{}", bitmap_extension);
             let bitmap_extension_account: raydium_amm_v3::states::TickArrayBitmapExtension =
-                program.account(bitmap_extension)?;
+                program.account(bitmap_extension).await?;
             println!("{:#?}", bitmap_extension_account);
         }
         CommandsName::PProtocol { protocol_id } => {
             let protocol_account: raydium_amm_v3::states::ProtocolPositionState =
-                program.account(protocol_id)?;
+                program.account(protocol_id).await?;
             println!("{:#?}", protocol_account);
         }
         CommandsName::PPersonal { personal_id } => {
             let personal_account: raydium_amm_v3::states::PersonalPositionState =
-                program.account(personal_id)?;
+                program.account(personal_id).await?;
             println!("{:#?}", personal_account);
         }
         CommandsName::DecodeInstruction { instr_hex_data } => {

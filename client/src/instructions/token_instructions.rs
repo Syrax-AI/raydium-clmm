@@ -15,9 +15,9 @@ use spl_token_2022::{
     state::{Account, Mint},
 };
 use spl_token_client::token::ExtensionInitializationParams;
-use std::{rc::Rc, str::FromStr};
+use std::{rc::Rc, str::FromStr, sync::Arc};
 
-pub fn create_and_init_mint_instr(
+pub async fn create_and_init_mint_instr(
     config: &ClientConfig,
     token_program: Pubkey,
     mint_key: &Pubkey,
@@ -46,7 +46,8 @@ pub fn create_and_init_mint_instr(
         mint_key,
         program
             .rpc()
-            .get_minimum_balance_for_rent_exemption(space)?,
+            .get_minimum_balance_for_rent_exemption(space)
+            .await?,
         space as u64,
         &program.id(),
     )];
@@ -63,7 +64,7 @@ pub fn create_and_init_mint_instr(
     Ok(instructions)
 }
 
-pub fn create_account_rent_exmpt_instr(
+pub async fn create_account_rent_exmpt_instr(
     config: &ClientConfig,
     new_account_key: &Pubkey,
     owner: Pubkey,
@@ -81,7 +82,8 @@ pub fn create_account_rent_exmpt_instr(
             &new_account_key,
             program
                 .rpc()
-                .get_minimum_balance_for_rent_exemption(data_size)?,
+                .get_minimum_balance_for_rent_exemption(data_size)
+                .await?,
             data_size as u64,
             &program.id(),
         ))
@@ -89,7 +91,7 @@ pub fn create_account_rent_exmpt_instr(
     Ok(instructions)
 }
 
-pub fn create_ata_token_account_instr(
+pub async fn create_ata_token_account_instr(
     config: &ClientConfig,
     token_program: Pubkey,
     mint: &Pubkey,
@@ -114,7 +116,7 @@ pub fn create_ata_token_account_instr(
     Ok(instructions)
 }
 
-pub fn create_and_init_auxiliary_token(
+pub async fn create_and_init_auxiliary_token(
     config: &ClientConfig,
     new_account_key: &Pubkey,
     mint: &Pubkey,
@@ -154,7 +156,8 @@ pub fn create_and_init_auxiliary_token(
             &mint,
             program
                 .rpc()
-                .get_minimum_balance_for_rent_exemption(space)?,
+                .get_minimum_balance_for_rent_exemption(space)
+                .await?,
             space as u64,
             &program.id(),
         ))
@@ -192,7 +195,7 @@ pub fn close_token_account(
             &owner.pubkey(),
             &[],
         )?)
-        .signer(owner)
+        .signer(Arc::new(owner.insecure_clone()))
         .instructions()?;
     Ok(instructions)
 }
@@ -219,7 +222,7 @@ pub fn spl_token_transfer_instr(
             &[],
             amount,
         )?)
-        .signer(from_authority)
+        .signer(Arc::new(from_authority.insecure_clone()))
         .instructions()?;
     Ok(instructions)
 }
@@ -251,7 +254,7 @@ pub fn spl_token_mint_to_instr(
             &[],
             amount,
         )?)
-        .signer(mint_authority)
+        .signer(Arc::new(mint_authority.insecure_clone()))
         .instructions()?;
     Ok(instructions)
 }
